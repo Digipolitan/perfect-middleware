@@ -17,6 +17,6 @@ class MiddlewareWrapper: Middleware {
     }
 
     func handle(context: RouteContext) throws {
-        try self.handle(context: context)
+        try self.handler(context)
     }
 }
