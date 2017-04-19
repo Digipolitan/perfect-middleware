@@ -18,10 +18,12 @@ open class RouterMiddleware {
         self.afterAll = [Middleware]()
     }
 
+    @discardableResult
     public func use(event: Event = .beforeAll, middlewareHandler: @escaping MiddlewareHandler) -> Self {
         return self.use(event: event, middleware: MiddlewareWrapper(handler: middlewareHandler))
     }
 
+    @discardableResult
     public func use(event: Event = .beforeAll, middleware: Middleware) -> Self {
         switch event {
         case .beforeAll:
@@ -32,6 +34,7 @@ open class RouterMiddleware {
         return self
     }
 
+    @discardableResult
     public func use(errorHandler: @escaping ErrorHandler) -> Self {
         self.errorHandler = errorHandler
         return self

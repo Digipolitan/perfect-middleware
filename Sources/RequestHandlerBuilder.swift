@@ -20,13 +20,15 @@ public class RequestHandlerBuilder {
         self.errorHandler = errorHandler
     }
 
-    public func append(_ middleware: Middleware) -> Self {
+    @discardableResult
+    public func append(middleware: Middleware) -> Self {
         self.middlewares.append(middleware)
         return self
     }
 
-    public func append(_ middlewareHandler: @escaping MiddlewareHandler) -> Self {
-        return self.append(MiddlewareWrapper(handler: middlewareHandler))
+    @discardableResult
+    public func append(handler: @escaping MiddlewareHandler) -> Self {
+        return self.append(middleware: MiddlewareWrapper(handler: handler))
     }
 
     public func build() -> RequestHandler {
@@ -39,6 +41,4 @@ public class RequestHandlerBuilder {
             MiddlewareIterator(request: request, response: response, middlewares: middlewares, errorHandler: errorHandler).next()
         }
     }
-
-
 }
