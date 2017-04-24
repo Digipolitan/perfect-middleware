@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
     name: "DGPerfectMiddleware",
     dependencies: [
-                .Package(url: "https://github.com/PerfectlySoft/Perfect-HTTP.git",
+                .Package(url: "https://github.com/PerfectlySoft/Perfect-HTTPServer.git",
                         majorVersion: 2,
                         minor: 1)
         ]
