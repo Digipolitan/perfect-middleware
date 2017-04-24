@@ -129,7 +129,7 @@ open class RouterMiddleware {
             value.forEach({ (key: String, value: [Middleware]) in
                 let uriComponents = filePathComponents + key.filePathComponents
                 let middlewares = depthBeforeAll + value + depthAfterAll
-                routes.add(method: method, uri: uriComponents.joined(separator: uriComponents.joined(separator: "/")), handler: { request, response in
+                routes.add(method: method, uri: uriComponents.joined(separator: "/"), handler: { request, response in
                     MiddlewareIterator(request: request, response: response, middlewares: middlewares, errorHandler: curErrorHandler).next()
                 })
             })
