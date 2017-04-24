@@ -123,20 +123,22 @@ open class RouterMiddleware {
         let depthBeforeAll = beforeAll + self.beforeAll
         let depthAfterAll = afterAll + self.afterAll
 
-        let filePathComponents = path.filePathComponents
         let curErrorHandler = (errorHandler != nil) ? errorHandler : self.errorHandler
         self.registry.routes.forEach { (method: HTTPMethod, value: [String : [Middleware]]) in
             value.forEach({ (key: String, value: [Middleware]) in
-                let uriComponents = filePathComponents + key.filePathComponents
                 let middlewares = depthBeforeAll + value + depthAfterAll
-                routes.add(method: method, uri: uriComponents.joined(separator: "/"), handler: { request, response in
+                routes.add(method: method, uri: key, handler: { request, response in
                     MiddlewareIterator(request: request, response: response, middlewares: middlewares, errorHandler: curErrorHandler).next()
                 })
             })
         }
 
+        let filePathComponents = path.filePathComponents
         self.children.forEach { (key: String, value: RouterMiddleware) in
-            routes.add(value.getRoutes(path: key, beforeAll: depthBeforeAll, afterAll: depthAfterAll, errorHandler: curErrorHandler));
+            let childComponents = key.filePathComponents
+            let components = filePathComponents + childComponents
+            print(components.joined(separator: "/"))
+            routes.add(value.getRoutes(path: components.joined(separator: "/"), beforeAll: depthBeforeAll, afterAll: depthAfterAll, errorHandler: curErrorHandler));
         }
 
         return routes
