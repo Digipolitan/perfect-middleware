@@ -1,10 +1,28 @@
+//
+//  RouterMiddleware.swift
+//  DGPerfectMiddleware
+//
+//  Created by Benoit BRIATTE on 20/04/2017.
+//
+//
+
 import PerfectHTTP
 import PerfectHTTPServer
 
+/**
+ * The middleware router for the routing of requests
+ * @author Benoit BRIATTE http://www.digipolitan.com
+ * @copyright 2017 Digipolitan. All rights reserved.
+ */
 open class RouterMiddleware {
 
+    /**
+     * Events for middleware
+     */
     public enum Event {
+        /** Call the middleware before all others */
         case beforeAll
+        /** Call the middleware after all others */
         case afterAll
     }
 
@@ -137,7 +155,6 @@ open class RouterMiddleware {
         self.children.forEach { (key: String, value: RouterMiddleware) in
             let childComponents = key.filePathComponents
             let components = filePathComponents + childComponents
-            print(components.joined(separator: "/"))
             routes.add(value.getRoutes(path: components.joined(separator: "/"), beforeAll: depthBeforeAll, afterAll: depthAfterAll, errorHandler: curErrorHandler));
         }
 

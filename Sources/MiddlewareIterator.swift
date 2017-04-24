@@ -1,8 +1,20 @@
+//
+//  MiddlewareIterator.swift
+//  DGPerfectMiddleware
+//
+//  Created by Benoit BRIATTE on 20/04/2017.
+//
+//
+
 import PerfectHTTP
 
-public typealias ErrorHandler = (Error, RouteContext) -> ()
-
-open class MiddlewareIterator: RouteContext {
+/**
+ * Internal RouteContext implementation
+ * This implementation iterate over all middleware one by one
+ * @author Benoit BRIATTE http://www.digipolitan.com
+ * @copyright 2017 Digipolitan. All rights reserved.
+ */
+class MiddlewareIterator: RouteContext {
 
     public let request: HTTPRequest
     public let response: HTTPResponse
