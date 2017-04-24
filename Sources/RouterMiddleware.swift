@@ -49,8 +49,71 @@ open class RouterMiddleware {
         return self
     }
 
+    @discardableResult
+    public func get(path: String, handler: @escaping MiddlewareHandler) -> Self {
+        return self.get(path: path, middleware: MiddlewareWrapper(handler: handler))
+    }
+
+    @discardableResult
     public func get(path: String, middleware: Middleware) -> Self {
         self.registry.add(method: .get, path: path, middleware: middleware)
+        return self
+    }
+
+    @discardableResult
+    public func post(path: String, handler: @escaping MiddlewareHandler) -> Self {
+        return self.post(path: path, middleware: MiddlewareWrapper(handler: handler))
+    }
+
+    @discardableResult
+    public func post(path: String, middleware: Middleware) -> Self {
+        self.registry.add(method: .post, path: path, middleware: middleware)
+        return self
+    }
+
+    @discardableResult
+    public func put(path: String, handler: @escaping MiddlewareHandler) -> Self {
+        return self.put(path: path, middleware: MiddlewareWrapper(handler: handler))
+    }
+
+    @discardableResult
+    public func put(path: String, middleware: Middleware) -> Self {
+        self.registry.add(method: .put, path: path, middleware: middleware)
+        return self
+    }
+
+    @discardableResult
+    public func delete(path: String, handler: @escaping MiddlewareHandler) -> Self {
+        return self.delete(path: path, middleware: MiddlewareWrapper(handler: handler))
+    }
+
+    @discardableResult
+    public func delete(path: String, middleware: Middleware) -> Self {
+        self.registry.add(method: .delete, path: path, middleware: middleware)
+        return self
+    }
+
+    @discardableResult
+    public func options(path: String, handler: @escaping MiddlewareHandler) -> Self {
+        return self.options(path: path, middleware: MiddlewareWrapper(handler: handler))
+    }
+
+    @discardableResult
+    public func options(path: String, middleware: Middleware) -> Self {
+        self.registry.add(method: .options, path: path, middleware: middleware)
+        return self
+    }
+
+    @discardableResult
+    public func methods(_ methods: [HTTPMethod], path: String, handler: @escaping MiddlewareHandler) -> Self {
+        return self.methods(methods, path: path, middleware: MiddlewareWrapper(handler: handler))
+    }
+
+    @discardableResult
+    public func methods(_ methods: [HTTPMethod], path: String, middleware: Middleware) -> Self {
+        methods.forEach { (method) in
+            self.registry.add(method: method, path: path, middleware: middleware)
+        }
         return self
     }
 
