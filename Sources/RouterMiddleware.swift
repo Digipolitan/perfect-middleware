@@ -175,7 +175,7 @@ open class RouterMiddleware {
             var notFoundMiddlewares = depthBeforeAll
             notFoundMiddlewares.append(notFound)
             notFoundMiddlewares.append(contentsOf: afterAll)
-            routes.add(uri: filePathComponents.joined(separator: "/") + "/**", handler: { request, response in
+            routes.add(uri: "/**", handler: { request, response in
                 MiddlewareIterator(request: request,
                                    response: response,
                                    middlewares: notFoundMiddlewares,
