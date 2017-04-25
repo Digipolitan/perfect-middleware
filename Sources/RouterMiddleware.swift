@@ -24,10 +24,13 @@ open class RouterMiddleware {
         case beforeAll
         /** Call the middleware after all others */
         case afterAll
+        /** Call the middleware if no routes were found */
+        case notFound
     }
 
     private var beforeAll: [Middleware]
     private var afterAll: [Middleware]
+    private var notFound: Middleware?
     private var children: [String: RouterMiddleware]
     private var registry: RoutesRegistry
     private var errorHandler: ErrorHandler?
@@ -40,17 +43,19 @@ open class RouterMiddleware {
     }
 
     @discardableResult
-    public func use(event: Event = .beforeAll, handler: @escaping MiddlewareHandler) -> Self {
+    public func use(event: Event, handler: @escaping MiddlewareHandler) -> Self {
         return self.use(event: event, middleware: MiddlewareWrapper(handler: handler))
     }
 
     @discardableResult
-    public func use(event: Event = .beforeAll, middleware: Middleware) -> Self {
+    public func use(event: Event, middleware: Middleware) -> Self {
         switch event {
         case .beforeAll:
             self.beforeAll.append(middleware)
         case .afterAll:
             self.afterAll.append(middleware)
+        case .notFound:
+            self.notFound = middleware
         }
         return self
     }
@@ -135,18 +140,22 @@ open class RouterMiddleware {
         return self
     }
 
-    fileprivate func getRoutes(path: String = "", beforeAll: [Middleware] = [], afterAll: [Middleware] = [], errorHandler: ErrorHandler? = nil) -> Routes {
+    fileprivate func getRoutes(path: String = "", beforeAll: [Middleware] = [], afterAll: [Middleware] = [], notFound: Middleware? = nil, errorHandler: ErrorHandler? = nil) -> Routes {
         var routes = Routes(baseUri: path)
 
         let depthBeforeAll = beforeAll + self.beforeAll
         let depthAfterAll = afterAll + self.afterAll
 
         let curErrorHandler = (errorHandler != nil) ? errorHandler : self.errorHandler
+        let curNotFound = (notFound != nil) ? notFound : self.notFound
         self.registry.routes.forEach { (method: HTTPMethod, value: [String : [Middleware]]) in
             value.forEach({ (key: String, value: [Middleware]) in
                 let middlewares = depthBeforeAll + value + depthAfterAll
                 routes.add(method: method, uri: key, handler: { request, response in
-                    MiddlewareIterator(request: request, response: response, middlewares: middlewares, errorHandler: curErrorHandler).next()
+                    MiddlewareIterator(request: request,
+                                       response: response,
+                                       middlewares: middlewares,
+                                       errorHandler: curErrorHandler).next()
                 })
             })
         }
@@ -155,7 +164,23 @@ open class RouterMiddleware {
         self.children.forEach { (key: String, value: RouterMiddleware) in
             let childComponents = key.filePathComponents
             let components = filePathComponents + childComponents
-            routes.add(value.getRoutes(path: components.joined(separator: "/"), beforeAll: depthBeforeAll, afterAll: depthAfterAll, errorHandler: curErrorHandler));
+            routes.add(value.getRoutes(path: components.joined(separator: "/"),
+                                       beforeAll: depthBeforeAll,
+                                       afterAll: depthAfterAll,
+                                       notFound: curNotFound,
+                                       errorHandler: curErrorHandler))
+        }
+
+        if let notFound = curNotFound {
+            var notFoundMiddlewares = depthBeforeAll
+            notFoundMiddlewares.append(notFound)
+            notFoundMiddlewares.append(contentsOf: afterAll)
+            routes.add(uri: filePathComponents.joined(separator: "/") + "/*", handler: { request, response in
+                MiddlewareIterator(request: request,
+                                   response: response,
+                                   middlewares: notFoundMiddlewares,
+                                   errorHandler: curErrorHandler).next()
+            })
         }
 
         return routes
