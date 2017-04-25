@@ -146,8 +146,9 @@ open class RouterMiddleware {
         let depthBeforeAll = beforeAll + self.beforeAll
         let depthAfterAll = afterAll + self.afterAll
 
-        let curErrorHandler = (errorHandler != nil) ? errorHandler : self.errorHandler
+        let curErrorHandler = (self.errorHandler != nil) ? self.errorHandler : errorHandler
         let curNotFound = (self.notFound != nil) ? self.notFound : notFound
+
         self.registry.routes.forEach { (method: HTTPMethod, value: [String : [Middleware]]) in
             value.forEach({ (key: String, value: [Middleware]) in
                 let middlewares = depthBeforeAll + value + depthAfterAll
@@ -174,7 +175,7 @@ open class RouterMiddleware {
         if let notFound = curNotFound {
             var notFoundMiddlewares = depthBeforeAll
             notFoundMiddlewares.append(notFound)
-            notFoundMiddlewares.append(contentsOf: afterAll)
+            notFoundMiddlewares.append(contentsOf: depthAfterAll)
             routes.add(uri: "/**", handler: { request, response in
                 MiddlewareIterator(request: request,
                                    response: response,
