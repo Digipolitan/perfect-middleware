@@ -34,6 +34,7 @@ class MiddlewareIterator: RouteContext {
     }
 
     public func next() {
+        print("middleware :" + String(self.middlewares.count))
         if self.current < self.middlewares.count {
             let cur = self.current
             self.current = cur + 1
