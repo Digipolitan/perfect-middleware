@@ -97,6 +97,7 @@ router.post(path: "/random") { (context) in
 
 it's possible to register middlewares before & after all child routes of the router
 
+```swift
 router.use(event: .beforeAll) { (context) in
     context["start_date"] = Date()
     context.next()
@@ -108,22 +109,27 @@ router.use(event: .beforeAll) { (context) in
     print(String(duration * 1000) + " ms")
     context.next()
 }
+```
 
 This code will print the duration in second of the process for each route
 
 ### 404 handler
 
+```swift
 router.use(event: .notFound) { (context) in
     context.response.setBody(string: "404").completed()
     context.next()
 }
+```
 
 ### Error handler
 
+```swift
 router.use { (err, context) in
     context.response.setBody(string: err.localizedDescription).completed()
     context.next()
 }
+```
 
 ### Register sub routers
 
