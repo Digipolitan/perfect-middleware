@@ -12,7 +12,6 @@ Perfect middleware swift allows developer to register middlewares inside a Perfe
 To install DGPerfectMiddleware with SPM, add the following lines to your `Package.swift`.
 
 ```swift
-
 import PackageDescription
 
 let package = Package(
@@ -21,7 +20,6 @@ let package = Package(
         .Package(url: "https://github.com/Digipolitan/perfect-middleware-swift.git", majorVersion: 1, minor: 0)
     ]
 )
-
 ```
 
 ## The Basics
@@ -94,6 +92,38 @@ router.post(path: "/random") { (context) in
 ```
 
 ## Advanced
+
+### Register middleware for all routes
+
+it's possible to register middlewares before & after all child routes of the router
+
+router.use(event: .beforeAll) { (context) in
+    context["start_date"] = Date()
+    context.next()
+}.use(event: .afterAll) { (context) in
+    guard let startDate = context["start_date"] as? Date else {
+        return
+    }
+    let duration = Date().timeIntervalSince1970 - startDate.timeIntervalSince1970
+    print(String(duration * 1000) + " ms")
+    context.next()
+}
+
+This code will print the duration in second of the process for each route
+
+### 404 handler
+
+router.use(event: .notFound) { (context) in
+    context.response.setBody(string: "404").completed()
+    context.next()
+}
+
+### Error handler
+
+router.use { (err, context) in
+    context.response.setBody(string: err.localizedDescription).completed()
+    context.next()
+}
 
 ### Register sub routers
 
