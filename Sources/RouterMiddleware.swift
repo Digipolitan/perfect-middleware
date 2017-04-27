@@ -147,18 +147,19 @@ open class RouterMiddleware {
         return self
     }
 
-    fileprivate func getRoutes(path: String = "", beforeAll: [Middleware] = [], afterAll: [Middleware] = [], errorHandler: ErrorHandler? = nil) -> Routes {
+    fileprivate func getRoutes(path: String = "", beforeAll: [Middleware] = [], afterAll: [Middleware] = [], verbose: Bool = false, errorHandler: ErrorHandler? = nil) -> Routes {
         var routes = Routes(baseUri: path)
 
         let depthBeforeAll = beforeAll + self.beforeAll
         let depthAfterAll = afterAll + self.afterAll
 
         let curErrorHandler = (self.errorHandler != nil) ? self.errorHandler : errorHandler
+        let curVerbose = (verbose == true) ? verbose : self.verbose
 
         self.registry.routes.forEach { (method: HTTPMethod, value: [String : [Middleware]]) in
             value.forEach({ (key: String, value: [Middleware]) in
                 let middlewares = depthBeforeAll + value + depthAfterAll
-                if self.verbose {
+                if curVerbose {
                     Log.info(message: "HTTP Server listen \(method.description) on \(path)\(key)")
                 }
                 routes.add(method: method, uri: key, handler: { request, response in
@@ -172,16 +173,18 @@ open class RouterMiddleware {
 
         self.children.forEach { (key: String, value: RouterMiddleware) in
             routes.add(value.getRoutes(path: path + key,
-                                       beforeAll: depthBeforeAll,
-                                       afterAll: depthAfterAll,
-                                       errorHandler: curErrorHandler))
+                    beforeAll: depthBeforeAll,
+                    afterAll: depthAfterAll,
+                    verbose: curVerbose,
+                    errorHandler: curErrorHandler
+            ))
         }
 
         if let notFound = self.notFound {
             var notFoundMiddlewares = depthBeforeAll
             notFoundMiddlewares.append(notFound)
             notFoundMiddlewares.append(contentsOf: depthAfterAll)
-            if self.verbose {
+            if curVerbose {
                 Log.info(message: "HTTP Server listen 404 from" + (path == "" ? "/" : path));
             }
             routes.add(uri: "**", handler: { request, response in
