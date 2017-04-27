@@ -6,6 +6,7 @@
 //
 //
 
+import PerfectLib
 import PerfectHTTP
 import PerfectHTTPServer
 
@@ -34,14 +35,18 @@ open class RouterMiddleware {
     private var children: [String: RouterMiddleware]
     private var registry: RoutesRegistry
     private var errorHandler: ErrorHandler?
-    private let debug: Bool
+    private var verbose: Bool;
 
-    public init(debug: Bool = false) {
+    public convenience init() {
+        self.init(verbose: false)
+    }
+
+    public init(verbose: Bool) {
         self.beforeAll = [Middleware]()
         self.afterAll = [Middleware]()
         self.children = [String: RouterMiddleware]()
         self.registry = RoutesRegistry()
-        self.debug = debug
+        self.verbose = verbose
     }
 
     @discardableResult
@@ -70,7 +75,7 @@ open class RouterMiddleware {
 
     @discardableResult
     public func use(path: String, router: RouterMiddleware) -> Self {
-        self.children[path] = router
+        self.children[RoutesRegistry.sanitize(path: path)] = router
         return self
     }
 
@@ -153,8 +158,8 @@ open class RouterMiddleware {
         self.registry.routes.forEach { (method: HTTPMethod, value: [String : [Middleware]]) in
             value.forEach({ (key: String, value: [Middleware]) in
                 let middlewares = depthBeforeAll + value + depthAfterAll
-                if self.debug {
-                    print("Router listen \(method.description) \(path)\(key)")
+                if self.verbose {
+                    Log.info(message: "HTTP Server listen \(method.description) on \(path)\(key)")
                 }
                 routes.add(method: method, uri: key, handler: { request, response in
                     MiddlewareIterator(request: request,
@@ -176,8 +181,8 @@ open class RouterMiddleware {
             var notFoundMiddlewares = depthBeforeAll
             notFoundMiddlewares.append(notFound)
             notFoundMiddlewares.append(contentsOf: depthAfterAll)
-            if self.debug {
-                print("Router listen 404 from " + (path == "" ? "/" : path))
+            if self.verbose {
+                Log.info(message: "HTTP Server listen 404 from" + (path == "" ? "/" : path));
             }
             routes.add(uri: "**", handler: { request, response in
                 MiddlewareIterator(request: request,
@@ -225,7 +230,7 @@ fileprivate class RoutesRegistry {
         }
         let last = characters.endIndex
         let separator = Character(UnicodeScalar(47))
-        if characters[last] == separator {
+        if characters[characters.index(before: last)] == separator {
             characters.removeLast()
         }
         let first = characters.startIndex
