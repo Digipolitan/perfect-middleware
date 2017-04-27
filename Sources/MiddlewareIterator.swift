@@ -24,7 +24,7 @@ class MiddlewareIterator: RouteContext {
     private var userInfo: [String: Any]
     private var current: Int
 
-    public init(request: HTTPRequest, response: HTTPResponse, middlewares: [Middleware], errorHandler: ErrorHandler? = nil) {
+    public init(request: HTTPRequest, response: HTTPResponse, middlewares: [Middleware], errorHandler: ErrorHandler?) {
         self.request = request
         self.response = response
         self.middlewares = middlewares

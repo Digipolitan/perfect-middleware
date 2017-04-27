@@ -185,7 +185,7 @@ open class RouterMiddleware {
             notFoundMiddlewares.append(notFound)
             notFoundMiddlewares.append(contentsOf: depthAfterAll)
             if curVerbose {
-                Log.info(message: "HTTP Server listen 404 from" + (path == "" ? "/" : path));
+                Log.info(message: "HTTP Server listen 404 from " + (path == "" ? "/" : path));
             }
             routes.add(uri: "**", handler: { request, response in
                 MiddlewareIterator(request: request,
