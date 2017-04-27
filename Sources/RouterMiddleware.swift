@@ -151,7 +151,7 @@ open class RouterMiddleware {
         var routes = Routes(baseUri: path)
 
         let depthBeforeAll = beforeAll + self.beforeAll
-        let depthAfterAll = afterAll + self.afterAll
+        let depthAfterAll = self.afterAll + afterAll
 
         let curErrorHandler = (self.errorHandler != nil) ? self.errorHandler : errorHandler
         let curVerbose = (verbose == true) ? verbose : self.verbose
@@ -205,7 +205,6 @@ public extension HTTPServer {
         self.addRoutes(router.getRoutes())
     }
 }
-
 
 fileprivate class RoutesRegistry {
 
