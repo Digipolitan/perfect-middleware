@@ -1,11 +1,12 @@
 //
 //  RouterMiddleware.swift
-//  DGPerfectMiddleware
+//  PerfectMiddleware
 //
 //  Created by Benoit BRIATTE on 20/04/2017.
 //
 //
 
+import PerfectLib
 import PerfectHTTP
 import PerfectHTTPServer
 
@@ -34,12 +35,18 @@ open class RouterMiddleware {
     private var children: [String: RouterMiddleware]
     private var registry: RoutesRegistry
     private var errorHandler: ErrorHandler?
+    private var verbose: Bool;
 
-    public init() {
+    public convenience init() {
+        self.init(verbose: false)
+    }
+
+    public init(verbose: Bool) {
         self.beforeAll = [Middleware]()
         self.afterAll = [Middleware]()
         self.children = [String: RouterMiddleware]()
         self.registry = RoutesRegistry()
+        self.verbose = verbose
     }
 
     @discardableResult
@@ -68,7 +75,7 @@ open class RouterMiddleware {
 
     @discardableResult
     public func use(path: String, router: RouterMiddleware) -> Self {
-        self.children[path] = router
+        self.children[RoutesRegistry.sanitize(path: path)] = router
         return self
     }
 
@@ -140,18 +147,21 @@ open class RouterMiddleware {
         return self
     }
 
-    fileprivate func getRoutes(path: String = "", beforeAll: [Middleware] = [], afterAll: [Middleware] = [], notFound: Middleware? = nil, errorHandler: ErrorHandler? = nil) -> Routes {
+    fileprivate func getRoutes(path: String = "", beforeAll: [Middleware] = [], afterAll: [Middleware] = [], verbose: Bool = false, errorHandler: ErrorHandler? = nil) -> Routes {
         var routes = Routes(baseUri: path)
 
         let depthBeforeAll = beforeAll + self.beforeAll
-        let depthAfterAll = afterAll + self.afterAll
+        let depthAfterAll = self.afterAll + afterAll
 
         let curErrorHandler = (self.errorHandler != nil) ? self.errorHandler : errorHandler
-        let curNotFound = (self.notFound != nil) ? self.notFound : notFound
+        let curVerbose = (verbose == true) ? verbose : self.verbose
 
         self.registry.routes.forEach { (method: HTTPMethod, value: [String : [Middleware]]) in
             value.forEach({ (key: String, value: [Middleware]) in
                 let middlewares = depthBeforeAll + value + depthAfterAll
+                if curVerbose {
+                    Log.info(message: "HTTP Server listen \(method.description) on \(path)\(key)")
+                }
                 routes.add(method: method, uri: key, handler: { request, response in
                     MiddlewareIterator(request: request,
                                        response: response,
@@ -161,22 +171,23 @@ open class RouterMiddleware {
             })
         }
 
-        let filePathComponents = path.filePathComponents
         self.children.forEach { (key: String, value: RouterMiddleware) in
-            let childComponents = key.filePathComponents
-            let components = filePathComponents + childComponents
-            routes.add(value.getRoutes(path: components.joined(separator: "/"),
-                                       beforeAll: depthBeforeAll,
-                                       afterAll: depthAfterAll,
-                                       notFound: curNotFound,
-                                       errorHandler: curErrorHandler))
+            routes.add(value.getRoutes(path: path + key,
+                    beforeAll: depthBeforeAll,
+                    afterAll: depthAfterAll,
+                    verbose: curVerbose,
+                    errorHandler: curErrorHandler
+            ))
         }
 
-        if let notFound = curNotFound {
+        if let notFound = self.notFound {
             var notFoundMiddlewares = depthBeforeAll
             notFoundMiddlewares.append(notFound)
             notFoundMiddlewares.append(contentsOf: depthAfterAll)
-            routes.add(uri: "/**", handler: { request, response in
+            if curVerbose {
+                Log.info(message: "HTTP Server listen 404 from " + (path == "" ? "/" : path));
+            }
+            routes.add(uri: "**", handler: { request, response in
                 MiddlewareIterator(request: request,
                                    response: response,
                                    middlewares: notFoundMiddlewares,
@@ -195,7 +206,6 @@ public extension HTTPServer {
     }
 }
 
-
 fileprivate class RoutesRegistry {
 
     fileprivate private(set) var routes: [HTTPMethod: [String: [Middleware]]]
@@ -205,12 +215,30 @@ fileprivate class RoutesRegistry {
     }
 
     public func add(method: HTTPMethod, path: String, middleware: Middleware) {
+        let sanitizePath = RoutesRegistry.sanitize(path: path)
         if self.routes[method] == nil {
             self.routes[method] = [String: [Middleware]]()
         }
-        if self.routes[method]![path] == nil {
-            self.routes[method]![path] = [Middleware]()
+        if self.routes[method]![sanitizePath] == nil {
+            self.routes[method]![sanitizePath] = [Middleware]()
         }
-        self.routes[method]![path]!.append(middleware)
+        self.routes[method]![sanitizePath]!.append(middleware)
+    }
+
+    static fileprivate func sanitize(path: String) -> String {
+        var characters = path.characters
+        guard characters.count > 0 && path != "/" else {
+            return "/"
+        }
+        let last = characters.endIndex
+        let separator = Character(UnicodeScalar(47))
+        if characters[characters.index(before: last)] == separator {
+            characters.removeLast()
+        }
+        let first = characters.startIndex
+        if characters[first] != separator {
+            characters.insert(separator, at: first)
+        }
+        return String(characters)
     }
 }

@@ -1,4 +1,4 @@
-DGPerfectMiddleware
+PerfectMiddleware
 =================================
 
 [![Twitter](https://img.shields.io/badge/twitter-@Digipolitan-blue.svg?style=flat)](http://twitter.com/Digipolitan)
@@ -9,7 +9,7 @@ Perfect middleware swift allows developer to register middlewares inside a Perfe
 
 ### Swift Package Manager
 
-To install DGPerfectMiddleware with SPM, add the following lines to your `Package.swift`.
+To install PerfectMiddleware with SPM, add the following lines to your `Package.swift`.
 
 ```swift
 import PackageDescription
@@ -160,4 +160,4 @@ unacceptable behavior to [contact@digipolitan.com](mailto:contact@digipolitan.co
 
 ## License
 
-DGPerfectMiddleware is licensed under the [BSD 3-Clause license](LICENSE).
+PerfectMiddleware is licensed under the [BSD 3-Clause license](LICENSE).
