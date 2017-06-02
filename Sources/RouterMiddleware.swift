@@ -1,6 +1,6 @@
 //
 //  RouterMiddleware.swift
-//  DGPerfectMiddleware
+//  PerfectMiddleware
 //
 //  Created by Benoit BRIATTE on 20/04/2017.
 //

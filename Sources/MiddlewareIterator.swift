@@ -1,6 +1,6 @@
 //
 //  MiddlewareIterator.swift
-//  DGPerfectMiddleware
+//  PerfectMiddleware
 //
 //  Created by Benoit BRIATTE on 20/04/2017.
 //
@@ -10,7 +10,7 @@ import PerfectHTTP
 
 /**
  * Internal RouteContext implementation
- * This implementation iterate over all middleware one by one
+ * This implementation iterate over all middlewares one by one
  * @author Benoit BRIATTE http://www.digipolitan.com
  * @copyright 2017 Digipolitan. All rights reserved.
  */

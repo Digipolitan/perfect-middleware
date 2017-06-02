@@ -1,7 +1,7 @@
 import XCTest
-@testable import DGPerfectMiddleware
+@testable import PerfectMiddleware
 
-class DGPerfectMiddlewareTests: XCTestCase {
+class PerfectMiddlewareTests: XCTestCase {
     func testExample() {
         XCTAssertTrue(true)
     }
