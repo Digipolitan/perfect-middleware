@@ -1,11 +1,3 @@
-//
-//  RouteContext.swift
-//  PerfectMiddleware
-//
-//  Created by Benoit BRIATTE on 17/04/2017.
-//
-//
-
 import PerfectHTTP
 
 /**

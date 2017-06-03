@@ -1,11 +1,3 @@
-//
-//  MiddlewareIterator.swift
-//  PerfectMiddleware
-//
-//  Created by Benoit BRIATTE on 20/04/2017.
-//
-//
-
 import PerfectHTTP
 
 /**
@@ -14,7 +6,7 @@ import PerfectHTTP
  * @author Benoit BRIATTE http://www.digipolitan.com
  * @copyright 2017 Digipolitan. All rights reserved.
  */
-class MiddlewareIterator: RouteContext {
+internal class MiddlewareIterator: RouteContext {
 
     public let request: HTTPRequest
     public let response: HTTPResponse

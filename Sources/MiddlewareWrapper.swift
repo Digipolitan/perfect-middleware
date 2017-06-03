@@ -1,11 +1,3 @@
-//
-//  MiddlewareWrapper.swift
-//  PerfectMiddleware
-//
-//  Created by Benoit BRIATTE on 17/04/2017.
-//
-//
-
 import PerfectHTTP
 
 /**
@@ -13,7 +5,7 @@ import PerfectHTTP
  * @author Benoit BRIATTE http://www.digipolitan.com
  * @copyright 2017 Digipolitan. All rights reserved.
  */
-class MiddlewareWrapper: Middleware {
+internal class MiddlewareWrapper: Middleware {
 
     private let handler: MiddlewareHandler
 
