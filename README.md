@@ -17,7 +17,7 @@ import PackageDescription
 let package = Package(
     name: "XXX",
     dependencies: [
-        .Package(url: "https://github.com/Digipolitan/perfect-middleware-swift.git", majorVersion: 1, minor: 0)
+        .Package(url: "https://github.com/Digipolitan/perfect-middleware-swift.git", majorVersion: 1)
     ]
 )
 ```
@@ -31,7 +31,7 @@ let server = HTTPServer()
 
 let router = RouterMiddleware()
 
-router.get(path: "/") { (context) in
+router.get(path: "/").bind { (context) in
     context.response.setBody(string: "It Works !").completed()
     context.next()
 }
@@ -51,18 +51,18 @@ do {
 Passing data between middlewares, you can provide 2 or more middleware for the same route and shared data across each middleware using the context
 
 ```swift
-router.get(path: "/") { (context) in
+router.get(path: "/")
+  .bind { (context) in
     context["name"] = "Steve"
     context.next()
-}
-
-router.get(path: "/") { (context) in
+  }
+  .bind { (context) in
     guard let name = context["name"] as? String else {
         return
     }
     context.response.setBody(string: "hello mr. \(name)!").completed()
     context.next()
-}
+  }
 ```
 
 It's possible to create and register Middleware subsclasses instead of closures
@@ -80,15 +80,15 @@ class RandomMiddleware: Middleware {
 Register Middleware as follow :
 
 ```swift
-router.post(path: "/random", middleware: RandomMiddleware())
-
-router.post(path: "/random") { (context) in
+router.post(path: "/random")
+  .bind(RandomMiddleware())
+  .bind { (context) in
     guard let rand = context["rand"] as? UInt32 else {
         return
     }
     context.response.setBody(string: "the result \(rand)").completed()
     context.next()
-}
+  }
 ```
 
 ## Advanced
@@ -140,12 +140,13 @@ let router = RouterMiddleware()
 
 let childRouter = RouterMiddleware()
 
-childRouter.get(path: "/name") { (context) in
+childRouter.get(path: "/name")
+  .bind { (context) in
     context.response.setBody(string: "My name is").completed()
     context.next()
-}
+  }
 
-router.use(path: "/user", router: childRouter)
+router.use(path: "/user", child: childRouter)
 
 server.use(router: router)
 ```

@@ -1,11 +1,3 @@
-//
-//  RouterMiddleware.swift
-//  PerfectMiddleware
-//
-//  Created by Benoit BRIATTE on 20/04/2017.
-//
-//
-
 import PerfectLib
 import PerfectHTTP
 import PerfectHTTPServer
@@ -33,9 +25,26 @@ open class RouterMiddleware {
     private var afterAll: [Middleware]
     private var notFound: Middleware?
     private var children: [String: RouterMiddleware]
-    private var registry: RoutesRegistry
+    private var registry: RouteMiddlewareRegistry
     private var errorHandler: ErrorHandler?
     private var verbose: Bool;
+
+    public static func sanitize(path: String) -> String {
+        var characters = path.characters
+        guard characters.count > 0 && path != "/" else {
+            return "/"
+        }
+        let last = characters.endIndex
+        let separator = Character(UnicodeScalar(47))
+        if characters[characters.index(before: last)] == separator {
+            characters.removeLast()
+        }
+        let first = characters.startIndex
+        if characters[first] != separator {
+            characters.insert(separator, at: first)
+        }
+        return String(characters)
+    }
 
     public convenience init() {
         self.init(verbose: false)
@@ -45,7 +54,7 @@ open class RouterMiddleware {
         self.beforeAll = [Middleware]()
         self.afterAll = [Middleware]()
         self.children = [String: RouterMiddleware]()
-        self.registry = RoutesRegistry()
+        self.registry = RouteMiddlewareRegistry()
         self.verbose = verbose
     }
 
@@ -74,77 +83,39 @@ open class RouterMiddleware {
     }
 
     @discardableResult
-    public func use(path: String, router: RouterMiddleware) -> Self {
-        self.children[RoutesRegistry.sanitize(path: path)] = router
+    public func use(path: String, child router: RouterMiddleware) -> Self {
+        self.children[RouterMiddleware.sanitize(path: path)] = router
         return self
     }
 
-    @discardableResult
-    public func get(path: String, handler: @escaping MiddlewareHandler) -> Self {
-        return self.get(path: path, middleware: MiddlewareWrapper(handler: handler))
+    public func get(path: String) -> MiddlewareBinder {
+        return self.binder(method: .get, path: path)
     }
 
-    @discardableResult
-    public func get(path: String, middleware: Middleware) -> Self {
-        self.registry.add(method: .get, path: path, middleware: middleware)
-        return self
+    public func post(path: String) -> MiddlewareBinder {
+        return self.binder(method: .post, path: path)
     }
 
-    @discardableResult
-    public func post(path: String, handler: @escaping MiddlewareHandler) -> Self {
-        return self.post(path: path, middleware: MiddlewareWrapper(handler: handler))
+    public func put(path: String) -> MiddlewareBinder {
+        return self.binder(method: .put, path: path)
     }
 
-    @discardableResult
-    public func post(path: String, middleware: Middleware) -> Self {
-        self.registry.add(method: .post, path: path, middleware: middleware)
-        return self
+    public func delete(path: String) -> MiddlewareBinder {
+        return self.binder(method: .delete, path: path)
     }
 
-    @discardableResult
-    public func put(path: String, handler: @escaping MiddlewareHandler) -> Self {
-        return self.put(path: path, middleware: MiddlewareWrapper(handler: handler))
+    public func options(path: String) -> MiddlewareBinder {
+        return self.binder(method: .options, path: path)
     }
 
-    @discardableResult
-    public func put(path: String, middleware: Middleware) -> Self {
-        self.registry.add(method: .put, path: path, middleware: middleware)
-        return self
+    public func methods(_ methods: [HTTPMethod], path: String) -> MiddlewareBinder {
+        return CompositeMiddlewareBinder(children: methods.map { method -> MiddlewareBinder in
+            return self.binder(method: method, path: path)
+         })
     }
 
-    @discardableResult
-    public func delete(path: String, handler: @escaping MiddlewareHandler) -> Self {
-        return self.delete(path: path, middleware: MiddlewareWrapper(handler: handler))
-    }
-
-    @discardableResult
-    public func delete(path: String, middleware: Middleware) -> Self {
-        self.registry.add(method: .delete, path: path, middleware: middleware)
-        return self
-    }
-
-    @discardableResult
-    public func options(path: String, handler: @escaping MiddlewareHandler) -> Self {
-        return self.options(path: path, middleware: MiddlewareWrapper(handler: handler))
-    }
-
-    @discardableResult
-    public func options(path: String, middleware: Middleware) -> Self {
-        self.registry.add(method: .options, path: path, middleware: middleware)
-        return self
-    }
-
-    @discardableResult
-    public func methods(_ methods: [HTTPMethod], path: String, handler: @escaping MiddlewareHandler) -> Self {
-        return self.methods(methods, path: path, middleware: MiddlewareWrapper(handler: handler))
-    }
-
-    @discardableResult
-    public func methods(_ methods: [HTTPMethod], path: String, middleware: Middleware) -> Self {
-        methods.forEach { (method) in
-            self.registry.add(method: method, path: path, middleware: middleware)
-        }
-        return self
+    public func binder(method: HTTPMethod, path: String) -> MiddlewareBinder {
+        return self.registry.findOrCreate(method: method, path: path)
     }
 
     fileprivate func getRoutes(path: String = "", beforeAll: [Middleware] = [], afterAll: [Middleware] = [], verbose: Bool = false, errorHandler: ErrorHandler? = nil) -> Routes {
@@ -156,9 +127,9 @@ open class RouterMiddleware {
         let curErrorHandler = (self.errorHandler != nil) ? self.errorHandler : errorHandler
         let curVerbose = (verbose == true) ? verbose : self.verbose
 
-        self.registry.routes.forEach { (method: HTTPMethod, value: [String : [Middleware]]) in
-            value.forEach({ (key: String, value: [Middleware]) in
-                let middlewares = depthBeforeAll + value + depthAfterAll
+        self.registry.binders.forEach { (method: HTTPMethod, value: [String : RouteMiddlewareBinder]) in
+            value.forEach({ (key: String, value: RouteMiddlewareBinder) in
+                let middlewares = depthBeforeAll + value.middlewares + depthAfterAll
                 if curVerbose {
                     Log.info(message: "HTTP Server listen \(method.description) on \(path)\(key)")
                 }
@@ -199,46 +170,16 @@ open class RouterMiddleware {
     }
 }
 
+/**
+ * Add RouterMiddleware supports for HTTPServer
+ */
 public extension HTTPServer {
 
+    /**
+     * Register the router inside the HttpServer by adding all routes
+     * @param router The router midddleware to register
+     */
     public func use(router: RouterMiddleware) {
         self.addRoutes(router.getRoutes())
-    }
-}
-
-fileprivate class RoutesRegistry {
-
-    fileprivate private(set) var routes: [HTTPMethod: [String: [Middleware]]]
-
-    public init() {
-        self.routes = [HTTPMethod: [String: [Middleware]]]()
-    }
-
-    public func add(method: HTTPMethod, path: String, middleware: Middleware) {
-        let sanitizePath = RoutesRegistry.sanitize(path: path)
-        if self.routes[method] == nil {
-            self.routes[method] = [String: [Middleware]]()
-        }
-        if self.routes[method]![sanitizePath] == nil {
-            self.routes[method]![sanitizePath] = [Middleware]()
-        }
-        self.routes[method]![sanitizePath]!.append(middleware)
-    }
-
-    static fileprivate func sanitize(path: String) -> String {
-        var characters = path.characters
-        guard characters.count > 0 && path != "/" else {
-            return "/"
-        }
-        let last = characters.endIndex
-        let separator = Character(UnicodeScalar(47))
-        if characters[characters.index(before: last)] == separator {
-            characters.removeLast()
-        }
-        let first = characters.startIndex
-        if characters[first] != separator {
-            characters.insert(separator, at: first)
-        }
-        return String(characters)
     }
 }
