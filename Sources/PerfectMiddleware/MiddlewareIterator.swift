@@ -7,7 +7,6 @@ import PerfectHTTP
  * @copyright 2017 Digipolitan. All rights reserved.
  */
 internal class MiddlewareIterator: RouteContext {
-
     public let request: HTTPRequest
     public let response: HTTPResponse
 
@@ -21,20 +20,20 @@ internal class MiddlewareIterator: RouteContext {
         self.response = response
         self.middlewares = middlewares
         self.errorHandler = errorHandler
-        self.userInfo = [String: Any]()
-        self.current = 0
+        userInfo = [String: Any]()
+        current = 0
     }
 
     public func next() {
-        if self.current < self.middlewares.count {
-            let cur = self.current
-            self.current = cur + 1
+        if current < middlewares.count {
+            let cur = current
+            current = cur + 1
             do {
-                try self.middlewares[cur].handle(context: self)
+                try middlewares[cur].handle(context: self)
             } catch {
-                self.current = self.middlewares.count
-                if self.errorHandler != nil {
-                    self.errorHandler!(error, self)
+                current = middlewares.count
+                if errorHandler != nil {
+                    errorHandler!(error, self)
                 }
             }
         }
@@ -42,10 +41,10 @@ internal class MiddlewareIterator: RouteContext {
 
     public subscript(key: String) -> Any? {
         get {
-            return self.userInfo[key]
+            return userInfo[key]
         }
         set {
-            self.userInfo[key] = newValue
+            userInfo[key] = newValue
         }
     }
 }

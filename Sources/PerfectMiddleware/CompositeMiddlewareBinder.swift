@@ -9,7 +9,6 @@
  * @copyright 2017 Digipolitan. All rights reserved.
  */
 internal class CompositeMiddlewareBinder: MiddlewareBinder {
-
     public let children: [MiddlewareBinder]
 
     public init(children: [MiddlewareBinder]) {
@@ -18,7 +17,7 @@ internal class CompositeMiddlewareBinder: MiddlewareBinder {
 
     @discardableResult
     public func bind(_ middleware: Middleware) -> Self {
-        self.children.forEach { child in
+        children.forEach { child in
             child.bind(middleware)
         }
         return self
@@ -26,7 +25,7 @@ internal class CompositeMiddlewareBinder: MiddlewareBinder {
 
     @discardableResult
     public func bind(_ middlewares: [Middleware]) -> Self {
-        self.children.forEach { child in
+        children.forEach { child in
             child.bind(middlewares)
         }
         return self
@@ -34,6 +33,6 @@ internal class CompositeMiddlewareBinder: MiddlewareBinder {
 
     @discardableResult
     public func bind(_ handler: @escaping MiddlewareHandler) -> Self {
-        return self.bind(MiddlewareWrapper(handler: handler))
+        return bind(MiddlewareWrapper(handler: handler))
     }
 }

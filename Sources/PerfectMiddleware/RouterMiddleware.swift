@@ -1,6 +1,6 @@
-import PerfectLib
 import PerfectHTTP
 import PerfectHTTPServer
+import PerfectLib
 
 /**
  * The middleware router for the routing of requests
@@ -8,7 +8,6 @@ import PerfectHTTPServer
  * @copyright 2017 Digipolitan. All rights reserved.
  */
 open class RouterMiddleware {
-
     /**
      * Events for middleware
      */
@@ -27,11 +26,11 @@ open class RouterMiddleware {
     private var children: [String: RouterMiddleware]
     private var registry: RouteMiddlewareRegistry
     private var errorHandler: ErrorHandler?
-    private var verbose: Bool;
+    private var verbose: Bool
 
     public static func sanitize(path: String) -> String {
-        var characters = path.characters
-        guard characters.count > 0 && path != "/" else {
+        var characters = path
+        guard characters.count > 0, path != "/" else {
             return "/"
         }
         let last = characters.endIndex
@@ -51,27 +50,27 @@ open class RouterMiddleware {
     }
 
     public init(verbose: Bool) {
-        self.beforeAll = [Middleware]()
-        self.afterAll = [Middleware]()
-        self.children = [String: RouterMiddleware]()
-        self.registry = RouteMiddlewareRegistry()
+        beforeAll = [Middleware]()
+        afterAll = [Middleware]()
+        children = [String: RouterMiddleware]()
+        registry = RouteMiddlewareRegistry()
         self.verbose = verbose
     }
 
     @discardableResult
     public func use(event: Event, handler: @escaping MiddlewareHandler) -> Self {
-        return self.use(event: event, middleware: MiddlewareWrapper(handler: handler))
+        return use(event: event, middleware: MiddlewareWrapper(handler: handler))
     }
 
     @discardableResult
     public func use(event: Event, middleware: Middleware) -> Self {
         switch event {
         case .beforeAll:
-            self.beforeAll.append(middleware)
+            beforeAll.append(middleware)
         case .afterAll:
-            self.afterAll.append(middleware)
+            afterAll.append(middleware)
         case .notFound:
-            self.notFound = middleware
+            notFound = middleware
         }
         return self
     }
@@ -84,38 +83,38 @@ open class RouterMiddleware {
 
     @discardableResult
     public func use(path: String, child router: RouterMiddleware) -> Self {
-        self.children[RouterMiddleware.sanitize(path: path)] = router
+        children[RouterMiddleware.sanitize(path: path)] = router
         return self
     }
 
     public func get(path: String) -> MiddlewareBinder {
-        return self.binder(method: .get, path: path)
+        return binder(method: .get, path: path)
     }
 
     public func post(path: String) -> MiddlewareBinder {
-        return self.binder(method: .post, path: path)
+        return binder(method: .post, path: path)
     }
 
     public func put(path: String) -> MiddlewareBinder {
-        return self.binder(method: .put, path: path)
+        return binder(method: .put, path: path)
     }
 
     public func delete(path: String) -> MiddlewareBinder {
-        return self.binder(method: .delete, path: path)
+        return binder(method: .delete, path: path)
     }
 
     public func options(path: String) -> MiddlewareBinder {
-        return self.binder(method: .options, path: path)
+        return binder(method: .options, path: path)
     }
 
     public func methods(_ methods: [HTTPMethod], path: String) -> MiddlewareBinder {
         return CompositeMiddlewareBinder(children: methods.map { method -> MiddlewareBinder in
-            return self.binder(method: method, path: path)
-         })
+            self.binder(method: method, path: path)
+        })
     }
 
     public func binder(method: HTTPMethod, path: String) -> MiddlewareBinder {
-        return self.registry.findOrCreate(method: method, path: path)
+        return registry.findOrCreate(method: method, path: path)
     }
 
     fileprivate func getRoutes(path: String = "", beforeAll: [Middleware] = [], afterAll: [Middleware] = [], verbose: Bool = false, errorHandler: ErrorHandler? = nil) -> Routes {
@@ -127,8 +126,8 @@ open class RouterMiddleware {
         let curErrorHandler = (self.errorHandler != nil) ? self.errorHandler : errorHandler
         let curVerbose = (verbose == true) ? verbose : self.verbose
 
-        self.registry.binders.forEach { (method: HTTPMethod, value: [String : RouteMiddlewareBinder]) in
-            value.forEach({ (key: String, value: RouteMiddlewareBinder) in
+        registry.binders.forEach { method, value in
+            value.forEach { key, value in
                 let middlewares = depthBeforeAll + value.middlewares + depthAfterAll
                 if curVerbose {
                     Log.info(message: "HTTP Server listen \(method.description) on \(path)\(key)")
@@ -139,16 +138,15 @@ open class RouterMiddleware {
                                        middlewares: middlewares,
                                        errorHandler: curErrorHandler).next()
                 })
-            })
+            }
         }
 
-        self.children.forEach { (key: String, value: RouterMiddleware) in
+        children.forEach { key, value in
             routes.add(value.getRoutes(path: path + key,
-                    beforeAll: depthBeforeAll,
-                    afterAll: depthAfterAll,
-                    verbose: curVerbose,
-                    errorHandler: curErrorHandler
-            ))
+                                       beforeAll: depthBeforeAll,
+                                       afterAll: depthAfterAll,
+                                       verbose: curVerbose,
+                                       errorHandler: curErrorHandler))
         }
 
         if let notFound = self.notFound {
@@ -156,7 +154,7 @@ open class RouterMiddleware {
             notFoundMiddlewares.append(notFound)
             notFoundMiddlewares.append(contentsOf: depthAfterAll)
             if curVerbose {
-                Log.info(message: "HTTP Server listen 404 from " + (path == "" ? "/" : path));
+                Log.info(message: "HTTP Server listen 404 from " + (path == "" ? "/" : path))
             }
             routes.add(uri: "**", handler: { request, response in
                 MiddlewareIterator(request: request,
@@ -174,12 +172,11 @@ open class RouterMiddleware {
  * Add RouterMiddleware supports for HTTPServer
  */
 public extension HTTPServer {
-
     /**
      * Register the router inside the HttpServer by adding all routes
      * @param router The router midddleware to register
      */
-    public func use(router: RouterMiddleware) {
-        self.addRoutes(router.getRoutes())
+    func use(router: RouterMiddleware) {
+        addRoutes(router.getRoutes())
     }
 }

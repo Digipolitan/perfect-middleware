@@ -6,7 +6,6 @@ import PerfectHTTP
  * @copyright 2017 Digipolitan. All rights reserved.
  */
 public protocol MiddlewareBinder {
-
     /**
      * Register a middleware
      * @param middleware The middleware

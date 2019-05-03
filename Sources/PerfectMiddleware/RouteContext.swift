@@ -6,7 +6,6 @@ import PerfectHTTP
  * @copyright 2017 Digipolitan. All rights reserved.
  */
 public protocol RouteContext: class {
-
     /** Retrieves the request */
     var request: HTTPRequest { get }
     /** Retrieves the response */
@@ -16,5 +15,5 @@ public protocol RouteContext: class {
     func next()
 
     /** Retrieves or modify user information inside the route context */
-    subscript(key: String) -> Any? { get set }
+    subscript(_: String) -> Any? { get set }
 }

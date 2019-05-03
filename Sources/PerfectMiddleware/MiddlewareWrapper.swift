@@ -6,7 +6,6 @@ import PerfectHTTP
  * @copyright 2017 Digipolitan. All rights reserved.
  */
 internal class MiddlewareWrapper: Middleware {
-
     private let handler: MiddlewareHandler
 
     public init(handler: @escaping MiddlewareHandler) {
@@ -14,6 +13,6 @@ internal class MiddlewareWrapper: Middleware {
     }
 
     public func handle(context: RouteContext) throws {
-        try self.handler(context)
+        try handler(context)
     }
 }

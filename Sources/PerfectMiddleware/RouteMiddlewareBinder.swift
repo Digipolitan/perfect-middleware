@@ -9,16 +9,15 @@ import Foundation
  * Allows the user to register middleware and handler inside an array
  */
 internal class RouteMiddlewareBinder: MiddlewareBinder {
-
     public var middlewares: [Middleware]
 
     public init() {
-        self.middlewares = []
+        middlewares = []
     }
 
     @discardableResult
     public func bind(_ middleware: Middleware) -> Self {
-        self.middlewares.append(middleware)
+        middlewares.append(middleware)
         return self
     }
 
@@ -30,6 +29,6 @@ internal class RouteMiddlewareBinder: MiddlewareBinder {
 
     @discardableResult
     public func bind(_ handler: @escaping MiddlewareHandler) -> Self {
-        return self.bind(MiddlewareWrapper(handler: handler))
+        return bind(MiddlewareWrapper(handler: handler))
     }
 }

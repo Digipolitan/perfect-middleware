@@ -6,11 +6,10 @@ import PerfectHTTP
  * @copyright 2017 Digipolitan. All rights reserved.
  */
 internal class RouteMiddlewareRegistry {
-
     public private(set) var binders: [HTTPMethod: [String: RouteMiddlewareBinder]]
 
     public init() {
-        self.binders = [HTTPMethod: [String: RouteMiddlewareBinder]]()
+        binders = [HTTPMethod: [String: RouteMiddlewareBinder]]()
     }
 
     /**
@@ -21,14 +20,14 @@ internal class RouteMiddlewareRegistry {
      */
     public func findOrCreate(method: HTTPMethod, path: String) -> RouteMiddlewareBinder {
         let sanitizePath = RouterMiddleware.sanitize(path: path)
-        if self.binders[method] == nil {
-            self.binders[method] = [String: RouteMiddlewareBinder]()
+        if binders[method] == nil {
+            binders[method] = [String: RouteMiddlewareBinder]()
         }
-        if let binder = self.binders[method]![sanitizePath] {
+        if let binder = self.binders[method]?[sanitizePath] {
             return binder
         }
         let binder = RouteMiddlewareBinder()
-        self.binders[method]![sanitizePath] = binder
+        binders[method]?[sanitizePath] = binder
         return binder
     }
 }
