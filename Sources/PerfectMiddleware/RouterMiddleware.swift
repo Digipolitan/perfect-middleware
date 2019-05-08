@@ -30,20 +30,20 @@ open class RouterMiddleware {
     private var verbose: Bool;
 
     public static func sanitize(path: String) -> String {
-        var characters = path.characters
-        guard characters.count > 0 && path != "/" else {
+        guard path.count > 0 && path != "/" else {
             return "/"
         }
-        let last = characters.endIndex
+        var res = path;
+        let last = res.endIndex
         let separator = Character(UnicodeScalar(47))
-        if characters[characters.index(before: last)] == separator {
-            characters.removeLast()
+        if res[res.index(before: last)] == separator {
+            res.removeLast()
         }
-        let first = characters.startIndex
-        if characters[first] != separator {
-            characters.insert(separator, at: first)
+        let first = res.startIndex
+        if res[first] != separator {
+            res.insert(separator, at: first)
         }
-        return String(characters)
+        return res
     }
 
     public convenience init() {
@@ -179,7 +179,7 @@ public extension HTTPServer {
      * Register the router inside the HttpServer by adding all routes
      * @param router The router midddleware to register
      */
-    public func use(router: RouterMiddleware) {
+    func use(router: RouterMiddleware) {
         self.addRoutes(router.getRoutes())
     }
 }

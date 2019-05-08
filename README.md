@@ -1,6 +1,7 @@
 PerfectMiddleware
 =================================
 
+[![Swift Version](https://img.shields.io/badge/swift-5.0-orange.svg?style=flat)](https://developer.apple.com/swift/)
 [![Twitter](https://img.shields.io/badge/twitter-@Digipolitan-blue.svg?style=flat)](http://twitter.com/Digipolitan)
 
 Perfect middleware swift allows developer to register middlewares inside a Perfect HTTPServer
@@ -12,12 +13,20 @@ Perfect middleware swift allows developer to register middlewares inside a Perfe
 To install PerfectMiddleware with SPM, add the following lines to your `Package.swift`.
 
 ```swift
-import PackageDescription
-
 let package = Package(
     name: "XXX",
+    products: [
+        .library(
+            name: "XXX",
+            targets: ["XXX"]),
+    ],
     dependencies: [
-        .Package(url: "https://github.com/Digipolitan/perfect-middleware-swift.git", majorVersion: 1)
+        .package(url: "https://github.com/Digipolitan/perfect-middleware-swift.git", from: "1.1.0")
+    ],
+    targets: [
+        .target(
+            name: "XXX",
+            dependencies: ["PerfectMiddleware"])
     ]
 )
 ```

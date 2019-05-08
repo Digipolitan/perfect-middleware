@@ -38,6 +38,7 @@ Packages/
 .build/
 *.xcodeproj
 Package.pins
+Package.resolved
 
 # CocoaPods
 #
